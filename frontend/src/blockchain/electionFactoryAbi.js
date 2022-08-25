@@ -1,4 +1,4 @@
-const electionAbi = [
+const electionFactoryAbi = [
   {
     inputs: [
       {
@@ -34,4 +34,4 @@ const electionAbi = [
   },
 ];
 
-export default electionAbi;
+export default electionFactoryAbi;

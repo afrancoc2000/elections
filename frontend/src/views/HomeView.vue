@@ -3,7 +3,5 @@ import ElectionList from "../components/ElectionList.vue";
 </script>
 
 <template>
-  <main>
-    <ElectionList />
-  </main>
+  <ElectionList />
 </template>

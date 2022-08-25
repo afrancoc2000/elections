@@ -1,21 +1,35 @@
+<script setup lang="ts">
+import Vue from "vue";
+import router from "./router";
+
+function goToHome() {
+  router.push("/");
+}
+function goToGithub() {
+  window.location = "https://github.com/afrancoc2000/elections";
+}
+</script>
+
 <template>
-  <v-app>
+  <v-app id="inspire">
+    <v-app-bar app>
+      <img src="./assets/logo.png" class="logo" alt="Logo Ceiba" />
+      <v-toolbar-title> Elecciones con Blockchain</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn @click="goToHome" icon>
+        <v-icon>mdi-home</v-icon>
+      </v-btn>
+      <v-btn @click="goToGithub" icon>
+        <v-icon>mdi-github</v-icon>
+      </v-btn>
+    </v-app-bar>
+
     <v-main>
       <router-view />
     </v-main>
   </v-app>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  name: "App",
-
-  data() {
-    return {
-      //
-    };
-  },
-});
-</script>
+<style scoped>
+@import "./assets/main.css";
+</style>
