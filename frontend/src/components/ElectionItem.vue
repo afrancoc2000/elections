@@ -7,8 +7,7 @@ defineProps({
 
 <template>
   <v-list-item>
-    <v-list-item-avatar color="grey darken-1"> </v-list-item-avatar>
-
+    <v-icon>mdi-vote</v-icon>
     <v-list-item-content>
       <v-list-item-title>Votación {{ index }}</v-list-item-title>
 

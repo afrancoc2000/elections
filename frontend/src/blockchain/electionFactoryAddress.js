@@ -1,3 +1,3 @@
-const electionFactoryAddress = "0xAC0d736E988865051Ca5a470B26Ad8A2Cdb586B2";
+const electionFactoryAddress = "0x6b1792555736479DB29E22e729bBF7E5e4b27297";
 
 export default electionFactoryAddress;

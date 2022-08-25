@@ -1,12 +1,108 @@
 <script setup lang="ts">
 import ElectionItem from "./ElectionItem.vue";
-import CreateElection from "./CreateElection.vue";
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 
 const elections: any[] = reactive([]);
 
-function updateElections(election: any) {
-  elections.push(election);
+import Web3 from "web3";
+import { onMounted } from "vue";
+import detectEthereumProvider from "@metamask/detect-provider";
+
+import electionFactoryAddress from "../blockchain/electionFactoryAddress";
+import electionFactoryAbi from "../blockchain/electionFactoryAbi";
+
+const contractBudget = toEther(10);
+const subscription = toEther(0.5);
+
+const data: any = reactive({
+  provider: {},
+  web3: {},
+  electionFactoryContract: {},
+  accounts: [],
+  currentAccount: "",
+  noMetaMaskAlert: false,
+  elections: [],
+});
+
+onMounted(async () => {
+  data.provider = await detectEthereumProvider();
+  console.log(`provider: ${data.provider}`);
+
+  if (!data.provider) {
+    data.noMetaMaskAlert = true;
+    return;
+  }
+
+  data.web3 = new Web3(Web3.givenProvider);
+  data.accounts = await data.provider.request({ method: "eth_accounts" });
+  handleAccountsChanged(data.accounts);
+
+  if (data.provider.chainId === "0x1") {
+    alert("This is a test app. Please do not use the main network.");
+  }
+});
+
+function toEther(value: number) {
+  return value / 2000;
+}
+
+async function connect() {
+  data.accounts = await data.provider.request({
+    method: "eth_requestAccounts",
+  });
+  handleAccountsChanged(data.accounts);
+}
+
+function isConnected() {
+  return data.currentAccount !== "";
+}
+
+function handleAccountsChanged(accounts: string[]) {
+  if (accounts.length === 0) {
+    console.log("Please connect to MetaMask.");
+    return;
+  }
+
+  if (accounts[0] !== data.currentAccount) {
+    data.currentAccount = data.web3.utils.toChecksumAddress(accounts[0]);
+    console.log(`connected with account ${data.currentAccount}`);
+    getContract();
+    getElections();
+  }
+}
+
+function getContract() {
+  data.electionFactoryContract = new data.web3.eth.Contract(
+    electionFactoryAbi,
+    data.web3.utils.toChecksumAddress(electionFactoryAddress),
+    { from: data.currentAccount }
+  );
+}
+
+async function getElections() {
+  const electionAddresses = await data.electionFactoryContract.methods
+    .getElections()
+    .call();
+  data.elections = electionAddresses.map((address: string) => {
+    return { address: address };
+  });
+  console.log(`election addresses: ${electionAddresses}`);
+}
+
+async function createElection() {
+  const receipt = await data.electionFactoryContract.methods
+    .createElection(
+      ["burguer", "pizza"],
+      data.web3.utils.toWei(String(subscription), "ether")
+    )
+    .send({
+      from: data.currentAccount,
+      value: data.web3.utils.toWei(String(contractBudget), "ether"),
+    });
+
+  console.log(`create election result: ${receipt}`);
+  console.log(`result as json: ${JSON.stringify(receipt.receipt)}`);
+  await getElections();
 }
 </script>
 
@@ -14,11 +110,34 @@ function updateElections(election: any) {
   <v-container class="py-8 px-6" fluid>
     <v-row>
       <v-col cols="12">
+        <v-alert v-model="data.noMetaMaskAlert" closable close-label="Close Alert" density="comfortable" type="warning"
+          variant="tonal" title="Closable Alert">
+          Debes tener el plugin de Metamask instalado para poder usar esta
+          aplicación.
+        </v-alert>
+      </v-col>
+
+      <v-col cols="12">
         <v-card>
           <v-card-item>
-            <v-card-title>Crear elección:</v-card-title>
+            <v-card-title>Acciones:</v-card-title>
+            <v-card-text v-if="isConnected()">
+              Bienvenido {{ data.currentAccount }}
+            </v-card-text>
             <v-card-actions>
-              <CreateElection @create="updateElections"></CreateElection>
+              <v-spacer></v-spacer>
+              <v-btn @click="connect" v-if="!isConnected()">
+                <template v-slot:prepend>
+                  <v-icon>mdi-wifi</v-icon>
+                </template>
+                Conectar con Metamask
+              </v-btn>
+              <v-btn @click="createElection" v-if="isConnected()">
+                <template v-slot:prepend>
+                  <v-icon>mdi-vote</v-icon>
+                </template>
+                Nueva Votación
+              </v-btn>
             </v-card-actions>
           </v-card-item>
         </v-card>
@@ -29,9 +148,9 @@ function updateElections(election: any) {
           <v-card-title>Votaciones en curso:</v-card-title>
 
           <v-list two-line>
-            <template v-for="(election, index) in elections" :key="index">
+            <template v-for="(election, index) in data.elections" :key="index">
               <ElectionItem :address="election.address" :index="index"></ElectionItem>
-              <v-divider v-if="index !== elections.length - 1" :key="`divider-${index}`" inset>
+              <v-divider v-if="index !== data.elections.length - 1" :key="`divider-${index}`" inset>
               </v-divider>
             </template>
           </v-list>
