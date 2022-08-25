@@ -13,10 +13,16 @@
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
+    "browserify-zlib": "^0.2.0",
+    "events": "^3.3.0",
+    "process": "^0.11.10",
     "roboto-fontface": "*",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.4",
     "vue": "^3.2.37",
     "vue-router": "^4.1.3",
     "vuetify": "^3.0.0-beta.0",
+    "web3": "^1.7.5",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
