@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import ElectionItem from "./ElectionItem.vue";
-import { reactive, ref } from "vue";
-
-const elections: any[] = reactive([]);
+import { reactive } from "vue";
+import router from "../router";
 
 import Web3 from "web3";
 import { onMounted } from "vue";
 import detectEthereumProvider from "@metamask/detect-provider";
 
-import electionFactoryAddress from "../blockchain/electionFactoryAddress";
-import electionFactoryAbi from "../blockchain/electionFactoryAbi";
+const electionFactoryAddress = import.meta.env.VITE_ELECTION_FACTORY_ADDRESS;
+const electionFactoryAbi = JSON.parse(
+  import.meta.env.VITE_ELECTION_FACTORY_ABI
+);
 
 const contractBudget = toEther(10);
 const subscription = toEther(0.5);
@@ -104,14 +104,34 @@ async function createElection() {
   console.log(`result as json: ${JSON.stringify(receipt.receipt)}`);
   await getElections();
 }
+
+async function deleteElection(index: number) {
+  await data.electionFactoryContract.methods.deleteElection(index).send({
+    from: data.currentAccount,
+    value: data.web3.utils.toWei(String(contractBudget), "ether"),
+  });
+
+  await getElections();
+}
+
+function goToDetail(address: string) {
+  router.push(`/election/${address}`);
+}
 </script>
 
 <template>
   <v-container class="py-8 px-6" fluid>
     <v-row>
       <v-col cols="12">
-        <v-alert v-model="data.noMetaMaskAlert" closable close-label="Close Alert" density="comfortable" type="warning"
-          variant="tonal" title="Closable Alert">
+        <v-alert
+          v-model="data.noMetaMaskAlert"
+          closable
+          close-label="Close Alert"
+          density="comfortable"
+          type="warning"
+          variant="tonal"
+          title="Closable Alert"
+        >
           Debes tener el plugin de Metamask instalado para poder usar esta
           aplicación.
         </v-alert>
@@ -149,8 +169,33 @@ async function createElection() {
 
           <v-list two-line>
             <template v-for="(election, index) in data.elections" :key="index">
-              <ElectionItem :address="election.address" :index="index"></ElectionItem>
-              <v-divider v-if="index !== data.elections.length - 1" :key="`divider-${index}`" inset>
+              <div class="d-flex flex-row align-center">
+                <div class="ma-3 ml-4">
+                  <v-icon>mdi-ballot</v-icon>
+                </div>
+
+                <div class="ma-3">
+                  <v-list-item-title> Votación {{ index }} </v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ election.address }}
+                  </v-list-item-subtitle>
+                </div>
+                <v-spacer></v-spacer>
+
+                <div class="ma-3 mr-4">
+                  <v-btn @click="goToDetail(election.address)" class="mr-2" icon>
+                    <v-icon>mdi-poll</v-icon>
+                  </v-btn>
+                  <v-btn @click="deleteElection(index)" icon>
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </div>
+              </div>
+
+              <v-divider
+                v-if="index !== data.elections.length - 1"
+                :key="`divider-${index}`"
+              >
               </v-divider>
             </template>
           </v-list>

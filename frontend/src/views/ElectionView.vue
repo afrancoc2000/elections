@@ -1,5 +1,7 @@
+<script setup lang="ts">
+import ElectionDetail from "../components/ElectionDetail.vue";
+</script>
+
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
+  <ElectionDetail />
 </template>
