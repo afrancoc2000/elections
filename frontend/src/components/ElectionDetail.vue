@@ -15,6 +15,8 @@ const props = defineProps({
   address: String,
 });
 
+const stateLabel = ["Iniciado", "Subscripciones", "Votaciones", "Resultados"];
+
 const electionAbi = JSON.parse(import.meta.env.VITE_ELECTION_ABI);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,18 +121,11 @@ function isManager() {
 }
 
 function getStateLabel(state: number) {
-  switch (state) {
-    case 0:
-      return "Iniciado";
-    case 1:
-      return "Subscripciones";
-    case 2:
-      return "Votaciones";
-    case 3:
-      return "Resultados";
-    default:
-      console.log(`No se reconoce el estado: ${data.election.state}`);
-      return "Desconocido";
+  if (state < stateLabel.length) {
+    return stateLabel[state];
+  } else {
+    console.log(`No se reconoce el estado: ${data.election.state}`);
+    return "Desconocido";
   }
 }
 
