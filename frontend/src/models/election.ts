@@ -7,6 +7,8 @@ export class Election {
   public subscriptions: number;
   public totalVotes: number;
   public votes: number[];
+  public hasSubscribed: boolean;
+  public hasVoted: boolean;
 
   constructor() {
     this.address = "";
@@ -17,5 +19,7 @@ export class Election {
     this.subscriptions = 0;
     this.totalVotes = 0;
     this.votes = [];
+    this.hasSubscribed = false;
+    this.hasVoted = false;
   }
 }

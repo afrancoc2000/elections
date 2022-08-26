@@ -82,6 +82,8 @@ async function getContract() {
   data.election.totalVotes = await data.electionContract.methods
     .getTotalVotes()
     .call();
+  data.election.votes = await data.electionContract.methods.getVotes().call();
+  console.log("votes: " + data.election.votes + " " + data.election.votes[1]);
 
   data.electionContract.events.SubscriptionFinished(
     { fromBlock: 0 },
@@ -198,6 +200,16 @@ async function stopVoting() {
 async function subscribe() {
   data.electionContract.methods.subscribe().send({ from: data.currentAccount });
 }
+
+function getVotes(option: number) {
+  if (
+    Array.isArray(data.election.votes) &&
+    option < data.election.votes.length
+  ) {
+    return data.election.votes[option];
+  }
+  return 0;
+}
 </script>
 
 <template>
@@ -217,95 +229,156 @@ async function subscribe() {
             {{ data.errorAlertMessage }}
           </v-alert>
         </v-col>
-
-        <v-col cols="3">
-          <v-card height="170px">
-            <v-card-title>Estado</v-card-title>
-            <div>
-              <p class="text-h3 text-center my-8">
-                {{ getStateLabel(data.election.state) }}
-              </p>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="3">
-          <v-card height="170px">
-            <v-card-title>Personas inscritas</v-card-title>
-            <div>
-              <p class="text-h1 text-center ma-3">
-                {{ data.election.subscriptions }}
-              </p>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="3">
-          <v-card height="170px">
-            <v-card-title>Votos realizados</v-card-title>
-            <div>
-              <p class="text-h1 text-center ma-3">
-                {{ data.election.totalVotes }}
-              </p>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="3">
-          <v-card height="170px">
-            <v-card-title>Acciones</v-card-title>
-            <v-list>
-              <v-list-item v-if="data.election.state === 0">
-                <v-btn @click="startSubscribing()" v-if="isManager()">
-                  <template v-slot:prepend>
-                    <v-icon>mdi-ballot</v-icon>
-                  </template>
-                  Iniciar subscripciones
-                </v-btn>
-              </v-list-item>
-
-              <v-list-item v-if="data.election.state === 1">
-                <v-btn @click="startVoting()" v-if="isManager()">
-                  <template v-slot:prepend>
-                    <v-icon>mdi-vote</v-icon>
-                  </template>
-                  Iniciar votaciones
-                </v-btn>
-              </v-list-item>
-
-              <v-list-item v-if="data.election.state === 2">
-                <v-btn @click="stopVoting()" v-if="isManager()">
-                  <template v-slot:prepend>
-                    <v-icon>mdi-alarm</v-icon>
-                  </template>
-                  Terminar votaciones
-                </v-btn>
-              </v-list-item>
-
-              <v-list-item v-if="data.election.state === 1">
-                <v-btn @click="subscribe()">
-                  <template v-slot:prepend>
-                    <v-icon>mdi-hand</v-icon>
-                  </template>
-                  ¡Quiero Subscribirme!
-                </v-btn>
-              </v-list-item>
-            </v-list>
-          </v-card>
-        </v-col>
       </v-row>
 
       <v-row>
         <v-col cols="6">
+          <v-container class="ma-0 pa-0">
+            <v-row>
+              <v-col cols="12">
+                <v-card>
+                  <v-card-title>Estado</v-card-title>
+                  <v-card-text>
+                    <p class="text-h3 text-left">
+                      {{ getStateLabel(data.election.state) }}
+                    </p>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <v-col cols="6">
+                <v-card height="170px">
+                  <v-card-title>Personas inscritas</v-card-title>
+                  <div>
+                    <p class="text-h1 text-center ma-3">
+                      {{ data.election.subscriptions }}
+                    </p>
+                  </div>
+                </v-card>
+              </v-col>
+
+              <v-col cols="6">
+                <v-card height="170px">
+                  <v-card-title>Votos realizados</v-card-title>
+                  <div>
+                    <p class="text-h1 text-center ma-3">
+                      {{ data.election.totalVotes }}
+                    </p>
+                  </div>
+                </v-card>
+              </v-col>
+
+              <v-col cols="12">
+                <v-card>
+                  <v-card-title>Acciones</v-card-title>
+                  <v-card-actions>
+                    <v-btn
+                      @click="startSubscribing()"
+                      v-if="isManager() && data.election.state === 0"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon>mdi-ballot</v-icon>
+                      </template>
+                      Iniciar subscripciones
+                    </v-btn>
+
+                    <v-btn
+                      @click="startVoting()"
+                      v-if="isManager() && data.election.state === 1"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon>mdi-vote</v-icon>
+                      </template>
+                      Iniciar votaciones
+                    </v-btn>
+
+                    <v-btn
+                      @click="stopVoting()"
+                      v-if="isManager() && data.election.state === 2"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon>mdi-alarm</v-icon>
+                      </template>
+                      Terminar votaciones
+                    </v-btn>
+
+                    <v-btn
+                      @click="subscribe()"
+                      v-if="data.election.state === 1"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon>mdi-hand</v-icon>
+                      </template>
+                      ¡Quiero Subscribirme!
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-col>
+
+        <v-col cols="6">
           <v-card>
-            <v-card-title>Votos</v-card-title>
             <v-container>
               <v-row>
-                <v-col cols="6">
-                  <v-img src="/src/assets/pizza.jpg" alt="Pizza" />
+                <v-col cols="12">
+                  <v-container>
+                    <v-row>
+                      <v-col cols="6">
+                        <v-img src="/src/assets/pizza.jpg" alt="Pizza" />
+                      </v-col>
+                      <v-col cols="6" :align-self="'center'">
+                        <div>
+                          <p class="text-h1 text-center ma-3">
+                            {{ getVotes(0) }}
+                          </p>
+                          <p class="text-center">
+                            <v-btn
+                              @click="subscribe()"
+                              v-if="data.election.state === 2"
+                            >
+                              <template v-slot:prepend>
+                                <v-icon>mdi-pizza</v-icon>
+                              </template>
+                              ¡Quiero Pizza!
+                            </v-btn>
+                          </p>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-container>
                 </v-col>
-                <v-col cols="6">
-                  <v-img src="/src/assets/hamburguesa.jpg" alt="Hamburguesa" />
+
+                <v-col cols="12">
+                  <v-container>
+                    <v-row>
+                      <v-col cols="6">
+                        <v-img
+                          src="/src/assets/hamburguesa.jpg"
+                          alt="Hamburguesa"
+                        />
+                      </v-col>
+                      <v-col cols="6" :align-self="'center'">
+                        <div>
+                          <p class="text-h1 text-center ma-3">
+                            {{ getVotes(1) }}
+                          </p>
+                          <p class="text-center">
+                            <v-btn
+                              @click="subscribe()"
+                              v-if="data.election.state === 2"
+                            >
+                              <template v-slot:prepend>
+                                <v-icon>mdi-food</v-icon>
+                              </template>
+                              ¡Hamburguesa!
+                            </v-btn>
+                          </p>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-container>
                 </v-col>
               </v-row>
             </v-container>
