@@ -3,5 +3,5 @@ import ElectionDetail from "../components/ElectionDetail.vue";
 </script>
 
 <template>
-  <ElectionDetail />
+  <ElectionDetail :address="$route.params.address" />
 </template>

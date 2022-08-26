@@ -3,7 +3,7 @@ import HomeView from "../views/HomeView.vue";
 
 const electionView = {
   template: () => import("../views/ElectionView.vue"),
-  props: ["id"],
+  props: ["address"],
 };
 
 const router = createRouter({
@@ -15,12 +15,12 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: "/election/:id",
+      path: "/election/:address",
       name: "election",
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: electionView,
+      component: () => import("../views/ElectionView.vue"),
     },
   ],
 });

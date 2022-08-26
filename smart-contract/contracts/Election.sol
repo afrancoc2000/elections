@@ -17,14 +17,14 @@ contract Election {
     event SubscriptionFinished(address addr, bool outOfBudget);
     event VotingFinished(address addr, uint256[] votes);
 
-    event UserSubscribed(address addr, address userAddress, uint totalSubscribers);
+    event UserSubscribed(address addr, address userAddress, uint totalSubscriptions);
     event UserVoted(address addr, address userAddress, uint totalVotes);
 
-
-    address public owner;
-    State public state;
+    address owner;
+    address manager;
+    State state;
     uint256 subscriptionPayment;
-    uint256 subscribers;
+    uint256 subscriptions;
 
     uint256[] votes;
     string[] options;
@@ -41,7 +41,12 @@ contract Election {
         _;
     }
 
-    constructor(string[] memory _options, uint256 _subscriptionPayment)
+    modifier isManager() {
+        require(msg.sender == manager, "Not a manager");
+        _;
+    }
+
+    constructor(string[] memory _options, uint256 _subscriptionPayment, address _manager)
         payable
     {
         options = _options;
@@ -49,12 +54,13 @@ contract Election {
         owner = msg.sender;
         state = State.Started;
         subscriptionPayment = _subscriptionPayment;
+        manager = _manager;
     }
 
     function subscribe() public inState(State.Subscribing) {
         require(!hasSubscribed[msg.sender], "Account has already subscribed");
         hasSubscribed[msg.sender] = true;
-        subscribers++;
+        subscriptions++;
         payable(msg.sender).transfer(subscriptionPayment);
 
         if (address(this).balance < subscriptionPayment) {
@@ -62,7 +68,7 @@ contract Election {
             state = State.Voting;
             payable(owner).transfer(address(this).balance);
         }
-        emit UserSubscribed(address(this), msg.sender, subscribers);
+        emit UserSubscribed(address(this), msg.sender, subscriptions);
     }
 
     function vote(uint256 option) public inState(State.Voting) {
@@ -73,23 +79,23 @@ contract Election {
         hasVoted[msg.sender] = true;
 
         uint totalVotes = getTotalVotes();
-        if (totalVotes == subscribers) {
+        if (totalVotes == subscriptions) {
             emit VotingFinished(address(this), votes);
             state = State.Finished;
         }
         emit UserVoted(address(this), msg.sender, totalVotes);
     }
 
-    function startSubscribing() public inState(State.Started) isOwner {
+    function startSubscribing() public inState(State.Started) isManager {
         state = State.Subscribing;
     }
 
-    function startVoting() public inState(State.Subscribing) isOwner {
+    function startVoting() public inState(State.Subscribing) isManager {
         emit SubscriptionFinished(address(this), false);
         state = State.Voting;
     }
 
-    function stopVoting() public inState(State.Voting) isOwner {
+    function stopVoting() public inState(State.Voting) isManager {
         emit VotingFinished(address(this), votes);
         state = State.Finished;
     }
@@ -117,4 +123,21 @@ contract Election {
     function getBalance() public view returns (uint256) {
         return address(this).balance;
     }
+
+    function getOwner() public view returns (address) {
+        return owner;
+    }
+
+    function getManager() public view returns (address) {
+        return manager;
+    }
+
+    function getState() public view returns (State) {
+        return state;
+    }
+
+    function getSubscriptions() public view returns (uint256) {
+        return subscriptions;
+    }
+
 }

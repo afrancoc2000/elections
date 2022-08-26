@@ -13,9 +13,10 @@ contract ElectionFactory {
 
     function createElection(
         string[] memory options,
-        uint256 subscriptionPayment
+        uint256 subscriptionPayment, 
+        address manager
     ) public payable {
-        Election election = new Election(options, subscriptionPayment);
+        Election election = new Election(options, subscriptionPayment, manager);
         elections.push(election);
     }
 
@@ -25,6 +26,7 @@ contract ElectionFactory {
 
     function removeElection(uint256 index) public {
         if (index >= elections.length) return;
+        
         elections[index].closeElection();
         for (uint256 i = index; i < elections.length - 1; i++) {
             elections[i] = elections[i + 1];

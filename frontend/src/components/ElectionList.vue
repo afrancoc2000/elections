@@ -93,7 +93,8 @@ async function createElection() {
   const receipt = await data.electionFactoryContract.methods
     .createElection(
       ["burguer", "pizza"],
-      data.web3.utils.toWei(String(subscription), "ether")
+      data.web3.utils.toWei(String(subscription), "ether"),
+      data.currentAccount
     )
     .send({
       from: data.currentAccount,
@@ -106,9 +107,8 @@ async function createElection() {
 }
 
 async function deleteElection(index: number) {
-  await data.electionFactoryContract.methods.deleteElection(index).send({
+  await data.electionFactoryContract.methods.removeElection(index).send({
     from: data.currentAccount,
-    value: data.web3.utils.toWei(String(contractBudget), "ether"),
   });
 
   await getElections();
@@ -183,7 +183,11 @@ function goToDetail(address: string) {
                 <v-spacer></v-spacer>
 
                 <div class="ma-3 mr-4">
-                  <v-btn @click="goToDetail(election.address)" class="mr-2" icon>
+                  <v-btn
+                    @click="goToDetail(election.address)"
+                    class="mr-2"
+                    icon
+                  >
                     <v-icon>mdi-poll</v-icon>
                   </v-btn>
                   <v-btn @click="deleteElection(index)" icon>
