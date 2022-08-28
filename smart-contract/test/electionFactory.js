@@ -18,9 +18,10 @@ contract("ElectionFactory", function (accounts) {
   });
 
   it("can create a new election", async function () {
-    await electionFactory.createElection(
+    const receipt = await electionFactory.createElection(
       ["burguer", "pizza"],
       toWei(subscriptionFee),
+      owner,
       { from: owner, value: toWei(electionBudget) }
     );
 
@@ -32,12 +33,13 @@ contract("ElectionFactory", function (accounts) {
     await electionFactory.createElection(
       ["burguer", "pizza"],
       toWei(subscriptionFee),
+      owner,
       { from: owner, value: toWei(electionBudget) }
     );
 
     let elections = await electionFactory.getElections.call();
     expect(elections.length).to.equal(1);
-    
+
     await electionFactory.removeElection(0);
     elections = await electionFactory.getElections.call();
     expect(elections.length).to.equal(0);

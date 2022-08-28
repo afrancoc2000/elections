@@ -16,7 +16,7 @@ contract ElectionFactory {
         uint256 subscriptionPayment, 
         address manager
     ) public payable {
-        Election election = new Election(options, subscriptionPayment, manager);
+        Election election = new Election{value: msg.value}(options, subscriptionPayment, manager);
         elections.push(election);
     }
 

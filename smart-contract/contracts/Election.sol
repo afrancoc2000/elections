@@ -14,11 +14,9 @@ contract Election {
         Finished
     }
 
-    event SubscriptionFinished(address addr, bool outOfBudget);
-    event VotingFinished(address addr, uint256[] votes);
-
+    event StateChanged(address addr, State newState);
     event UserSubscribed(address addr, address userAddress, uint totalSubscriptions);
-    event UserVoted(address addr, address userAddress, uint totalVotes);
+    event UserVoted(address addr, address userAddress, uint totalVotes, uint256[] votes);
 
     address owner;
     address manager;
@@ -59,13 +57,14 @@ contract Election {
 
     function subscribe() public inState(State.Subscribing) {
         require(!hasSubscribed[msg.sender], "Account has already subscribed");
+        require(address(this).balance >= subscriptionPayment, "Not enough money to subscribe");
         hasSubscribed[msg.sender] = true;
         subscriptions++;
         payable(msg.sender).transfer(subscriptionPayment);
 
         if (address(this).balance < subscriptionPayment) {
-            emit SubscriptionFinished(address(this), true);
             state = State.Voting;
+            emit StateChanged(address(this), state);
             payable(owner).transfer(address(this).balance);
         }
         emit UserSubscribed(address(this), msg.sender, subscriptions);
@@ -80,28 +79,29 @@ contract Election {
 
         uint totalVotes = getTotalVotes();
         if (totalVotes == subscriptions) {
-            emit VotingFinished(address(this), votes);
             state = State.Finished;
+            emit StateChanged(address(this), state);
         }
-        emit UserVoted(address(this), msg.sender, totalVotes);
+        emit UserVoted(address(this), msg.sender, totalVotes, votes);
     }
 
     function startSubscribing() public inState(State.Started) isManager {
         state = State.Subscribing;
+        emit StateChanged(address(this), state);
     }
 
     function startVoting() public inState(State.Subscribing) isManager {
-        emit SubscriptionFinished(address(this), false);
         state = State.Voting;
+        emit StateChanged(address(this), state);
     }
 
     function stopVoting() public inState(State.Voting) isManager {
-        emit VotingFinished(address(this), votes);
         state = State.Finished;
+        emit StateChanged(address(this), state);
     }
 
     function closeElection() public isOwner {
-        selfdestruct(payable(owner));
+        selfdestruct(payable(manager));
     }
 
     function getTotalVotes() public view returns (uint256) {
@@ -138,6 +138,14 @@ contract Election {
 
     function getSubscriptions() public view returns (uint256) {
         return subscriptions;
+    }
+
+    function getHasSubscribed() public view returns (bool) {
+        return hasSubscribed[msg.sender];
+    }
+
+    function getHasVoted() public view returns (bool) {
+        return hasVoted[msg.sender];
     }
 
 }

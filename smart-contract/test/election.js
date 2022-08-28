@@ -5,6 +5,7 @@ contract("Election", function (accounts) {
   let owner;
   let voter1;
   let voter2;
+  let manager;
 
   const electionBudget = 0.1;
   const subscriptionFee = 0.05;
@@ -13,9 +14,11 @@ contract("Election", function (accounts) {
     owner = accounts[0];
     voter1 = accounts[1];
     voter2 = accounts[2];
+    manager = accounts[3];
     election = await Election.new(
       ["burguer", "pizza"],
       toWei(subscriptionFee),
+      manager,
       {
         from: owner,
         value: toWei(electionBudget),
@@ -34,42 +37,42 @@ contract("Election", function (accounts) {
   });
 
   it("has state Started by default", async function () {
-    let state = await election.state.call();
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(0);
   });
 
   it("cant subscribe in started state", async function () {
     try {
-      await election.subscribe.call({ from: voter1 });
+      await election.subscribe({ from: voter1 });
       fail();
     } catch (error) {
       expect(error.message).to.equal(
-        "Returned error: VM Exception while processing transaction: revert Invalid State"
+        "Returned error: VM Exception while processing transaction: revert Invalid State -- Reason given: Invalid State."
       );
     }
   });
 
-  it("can not change to subscribing in started state if not owner", async function () {
+  it("can not change to subscribing in started state if not manager", async function () {
     try {
-      await election.startSubscribing.call({ from: voter1 });
+      await election.startSubscribing({ from: voter1 });
       fail();
     } catch (error) {
       expect(error.message).to.equal(
-        "Returned error: VM Exception while processing transaction: revert Not an owner"
+        "Returned error: VM Exception while processing transaction: revert Not a manager -- Reason given: Not a manager."
       );
     }
   });
 
   it("can change to subscribing in started state", async function () {
-    await election.startSubscribing({ from: owner });
-    let state = await election.state.call();
+    await election.startSubscribing({ from: manager });
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(1);
   });
 
   it("can subscribe in subscribing state, and balances change", async function () {
     const initial = Number(await web3.eth.getBalance(voter1));
 
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     const receipt = await election.subscribe({ from: voter1 });
 
     // Obtain gas used from the receipt
@@ -92,7 +95,7 @@ contract("Election", function (accounts) {
 
   it("can not subscribe more than once", async function () {
     try {
-      await election.startSubscribing({ from: owner });
+      await election.startSubscribing({ from: manager });
       await election.subscribe({ from: voter1 });
       await election.subscribe({ from: voter1 });
       fail();
@@ -104,38 +107,38 @@ contract("Election", function (accounts) {
   });
 
   it("changes to voting when no more budget", async function () {
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
     await election.subscribe({ from: voter2 });
 
-    let state = await election.state.call();
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(2);
   });
 
-  it("changes to voting when set by owner", async function () {
-    await election.startSubscribing({ from: owner });
+  it("changes to voting when set by manager", async function () {
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
-    await election.startVoting({ from: owner });
+    await election.startVoting({ from: manager });
 
-    let state = await election.state.call();
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(2);
   });
 
-  it("fails when change to voting by not owner", async function () {
+  it("fails when change to voting by not manager", async function () {
     try {
-      await election.startSubscribing({ from: owner });
+      await election.startSubscribing({ from: manager });
       await election.subscribe({ from: voter1 });
       await election.startVoting({ from: voter1 });
       fail();
     } catch (error) {
       expect(error.message).to.equal(
-        "Returned error: VM Exception while processing transaction: revert Not an owner -- Reason given: Not an owner."
+        "Returned error: VM Exception while processing transaction: revert Not a manager -- Reason given: Not a manager."
       );
     }
   });
 
   it("updates votes when voting", async function () {
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
     await election.subscribe({ from: voter2 });
 
@@ -147,9 +150,9 @@ contract("Election", function (accounts) {
 
   it("fails if non subscriber votes", async function () {
     try {
-      await election.startSubscribing({ from: owner });
+      await election.startSubscribing({ from: manager });
       await election.subscribe({ from: voter1 });
-      await election.startVoting({ from: owner });
+      await election.startVoting({ from: manager });
 
       await election.vote(0, { from: voter2 });
       fail();
@@ -162,9 +165,9 @@ contract("Election", function (accounts) {
 
   it("fails if not a valid option", async function () {
     try {
-      await election.startSubscribing({ from: owner });
+      await election.startSubscribing({ from: manager });
       await election.subscribe({ from: voter1 });
-      await election.startVoting({ from: owner });
+      await election.startVoting({ from: manager });
 
       await election.vote(5, { from: voter1 });
       fail();
@@ -177,7 +180,7 @@ contract("Election", function (accounts) {
 
   it("fails if voting more than once", async function () {
     try {
-      await election.startSubscribing({ from: owner });
+      await election.startSubscribing({ from: manager });
       await election.subscribe({ from: voter1 });
       await election.subscribe({ from: voter2 });
 
@@ -192,7 +195,7 @@ contract("Election", function (accounts) {
   });
 
   it("changes to finished when everyone votes", async function () {
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
     await election.subscribe({ from: voter2 });
 
@@ -202,28 +205,28 @@ contract("Election", function (accounts) {
     let votes = await election.getVotes.call();
     expect(toNumbers(votes)).to.deep.equal([2, 0]);
 
-    let state = await election.state.call();
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(3);
   });
 
   it("changes to finished when stop voting", async function () {
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
     await election.subscribe({ from: voter2 });
 
     await election.vote(1, { from: voter1 });
-    await election.stopVoting({ from: owner });
+    await election.stopVoting({ from: manager });
 
     let votes = await election.getVotes.call();
     expect(toNumbers(votes)).to.deep.equal([0, 1]);
 
-    let state = await election.state.call();
+    let state = await election.getState.call();
     expect(state.toNumber()).to.equal(3);
   });
 
   it("fails if changes to stop voting by not an owner", async function () {
     try {
-        await election.startSubscribing({ from: owner });
+        await election.startSubscribing({ from: manager });
         await election.subscribe({ from: voter1 });
         await election.subscribe({ from: voter2 });
     
@@ -231,13 +234,13 @@ contract("Election", function (accounts) {
         await election.stopVoting({ from: voter1 });
         fail();
     } catch (error) {
-        expect(error.message).to.equal('Returned error: VM Exception while processing transaction: revert Not an owner -- Reason given: Not an owner.');
+        expect(error.message).to.equal('Returned error: VM Exception while processing transaction: revert Not a manager -- Reason given: Not a manager.');
     }
   });
 
   it("fails if changes to stop voting in wrong state", async function () {
     try {
-        await election.stopVoting({ from: voter1 });
+        await election.stopVoting({ from: manager });
         fail();
     } catch (error) {
         expect(error.message).to.equal('Returned error: VM Exception while processing transaction: revert Invalid State -- Reason given: Invalid State.');
@@ -245,7 +248,7 @@ contract("Election", function (accounts) {
   });
 
   it("calculates total votes", async function () {
-    await election.startSubscribing({ from: owner });
+    await election.startSubscribing({ from: manager });
     await election.subscribe({ from: voter1 });
     await election.subscribe({ from: voter2 });
 
