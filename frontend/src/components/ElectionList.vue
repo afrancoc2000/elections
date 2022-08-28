@@ -20,8 +20,9 @@ const data: any = reactive({
   electionFactoryContract: {},
   accounts: [],
   currentAccount: "",
-  noMetaMaskAlert: false,
   elections: [],
+  showErrorAlert: false,
+  errorAlertMessage: "",
 });
 
 const budgetRules = [
@@ -31,13 +32,14 @@ const subscriptionRules = [
   (value: unknown) => !!value || "La subscripción es requerida",
   (value: number) => value <= data.contractBudget || "La subscripción debe ser menor que el valor del contrato",
 ];
+const allowedProviders = ["0x64", "0x4d", "0x539"];
 
 onMounted(async () => {
   data.provider = await detectEthereumProvider();
   data.provider.on("accountsChanged", onAccountsChange);
 
   if (!data.provider) {
-    data.noMetaMaskAlert = true;
+    alert("Debes tener el plugin de Metamask instalado para poder usar esta aplicación.");
     return;
   }
 
@@ -45,8 +47,9 @@ onMounted(async () => {
   data.accounts = await data.provider.request({ method: "eth_accounts" });
   handleAccountsChanged(data.accounts);
 
-  if (data.provider.chainId === "0x1") {
-    alert("This is a test app. Please do not use the main network.");
+  if (!allowedProviders.includes(data.provider.chainId)) {
+    console.log("ChainID: " + data.provider.chainId);
+    alert("Debes conectarte a la red de Gnosis para poder usar esta aplicación.");
   }
 });
 
@@ -65,6 +68,11 @@ async function connect() {
 
 function isConnected() {
   return data.currentAccount !== "";
+}
+
+function alert(message: string) {
+  data.errorAlertMessage = message;
+  data.showErrorAlert = true;
 }
 
 async function handleAccountsChanged(accounts: string[]) {
@@ -139,20 +147,34 @@ function goToDetail(address: string) {
   <v-container class="py-8 px-6" fluid>
     <v-row>
       <v-col cols="12">
-        <v-alert v-model="data.noMetaMaskAlert" closable close-label="Close Alert" density="comfortable" type="warning"
-          variant="tonal" title="Closable Alert">
-          Debes tener el plugin de Metamask instalado para poder usar esta
-          aplicación.
+        <v-alert v-model="data.showErrorAlert" closable close-label="Cerrar" density="comfortable" type="error"
+          variant="tonal" title="Error en la aplicación">
+          {{ data.errorAlertMessage }}
         </v-alert>
+      </v-col>
+      <v-col cols="12">
+        <v-banner v-if="isConnected()" two-line>
+          <v-container fluid class="ma-0 pa-0">
+            <v-row>
+              <v-col cols="auto">
+                <v-avatar slot="icon" color="#10D25F" size="40">
+                  <v-icon icon="mdi-lightbulb" color="white"> mdi-lightbulb </v-icon>
+                </v-avatar>
+              </v-col>
+              <v-col cols="11.5">
+            Bienvenido {{ data.currentAccount }}, esta es una DApp de votaciones, se encuentra desplegada en la red de
+            Gnosis, para usar esta red, configura los siguientes parámetros en Metamask: Name: Gnosis, RPC Url:
+            https://rpc.gnosischain.com/, Chain ID: 100 y Currency Symbol: xDai.
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-banner>
       </v-col>
 
       <v-col cols="12">
         <v-card>
           <v-card-item>
             <v-card-title>Acciones:</v-card-title>
-            <v-card-text v-if="isConnected()">
-              Bienvenido {{ data.currentAccount }}
-            </v-card-text>
             <v-form v-model="data.valid">
               <v-container fluid>
                 <v-row :align="'center'" :justify="'center'" v-if="!isConnected()">
@@ -172,28 +194,12 @@ function goToDetail(address: string) {
                     <div>Nueva Votación:</div>
                   </v-col>
                   <v-col cols="3" lg="2">
-                    <v-text-field
-                      v-model="data.contractBudget"
-                      hide-details="auto"
-                      label="Valor contrato"
-                      type="number"
-                      step="0.1"
-                      suffix="ETH"
-                      class="create-input"
-                      :rules="budgetRules"
-                    />
+                    <v-text-field v-model="data.contractBudget" hide-details="auto" label="Valor contrato" type="number"
+                      step="0.1" suffix="ETH" class="create-input" :rules="budgetRules" />
                   </v-col>
                   <v-col cols="3" lg="2">
-                    <v-text-field
-                      v-model="data.subscriptionValue"
-                      hide-details="auto"
-                      label="Valor Subscripción"
-                      type="number"
-                      step="0.1"
-                      suffix="ETH"
-                      class="create-input"
-                      :rules="subscriptionRules"
-                    />
+                    <v-text-field v-model="data.subscriptionValue" hide-details="auto" label="Valor Subscripción"
+                      type="number" step="0.1" suffix="ETH" class="create-input" :rules="subscriptionRules" />
                   </v-col>
                   <v-col cols="3" lg="2" :align-self="'end'" depressed>
                     <v-btn color="success" @click="createElection" :disabled="!data.valid">

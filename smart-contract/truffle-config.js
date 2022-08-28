@@ -1,3 +1,8 @@
+require('dotenv').config();
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+
+console.log(process.env.MNEMONIC);
+
 module.exports = {
   networks: {
     xdai: {
@@ -10,6 +15,15 @@ module.exports = {
       network_id: 100,
       gas: 500000,
       gasPrice: 1000000000,
+    },
+    zokol: {
+      provider: function () {
+        return new HDWalletProvider({
+          privateKeys: [process.env.PRIVATE_KEY_1],
+          providerOrUrl: "https://sokol.poa.network/"
+        });
+      },
+      network_id: 77,
     },
     ganache: {
       host: "localhost", 
