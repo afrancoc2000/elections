@@ -4,6 +4,8 @@ import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
 
 export default defineConfig({
+  root: "./",
+  publicDir: "public",
   plugins: [vue(), vuetify({ autoImport: true })],
   resolve: {
     alias: {
