@@ -436,7 +436,4 @@ function toEher(value: number) {
       </v-card>
     </v-dialog>
   </div>
-  <img src="../assets/hamburguesa.jpg" class="d-none" />
-  <img src="../assets/pizza.jpg" class="d-none" />
-  <img src="../assets/empate.jpg" class="d-none" />
 </template>
