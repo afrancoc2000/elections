@@ -324,7 +324,7 @@ function toEher(value: number) {
                   <v-container>
                     <v-row>
                       <v-col cols="6">
-                        <v-img src="/public/pizza.jpg" alt="Pizza"></v-img>
+                        <v-img src="/pizza.jpg" alt="Pizza"></v-img>
                       </v-col>
                       <v-col cols="6" :align-self="'center'">
                         <div>
@@ -350,7 +350,7 @@ function toEher(value: number) {
                   <v-container>
                     <v-row>
                       <v-col cols="6">
-                        <v-img src="/public/hamburguesa.jpg" alt="Hamburguesa" />
+                        <v-img src="/hamburguesa.jpg" alt="Hamburguesa" />
                       </v-col>
                       <v-col cols="6" :align-self="'center'">
                         <div>
@@ -380,7 +380,7 @@ function toEher(value: number) {
 
     <v-dialog v-model="data.pizzaDialog" max-width="640">
       <v-card elevation="10">
-        <v-img src="/public/pizza.jpg"></v-img>
+        <v-img src="/pizza.jpg"></v-img>
         <v-card-title class="text-h5"> Y el ganador es... ¡La Pizza! </v-card-title>
         <v-card-text>
           La pizza gana a la hamburguesa en la carrera por el trono del alimento más consumido del planeta. Originaria
@@ -399,7 +399,7 @@ function toEher(value: number) {
     </v-dialog>
     <v-dialog v-model="data.burguerDialog" max-width="640">
       <v-card elevation="10">
-        <v-img src="/public/hamburguesa.jpg"></v-img>
+        <v-img src="/hamburguesa.jpg"></v-img>
         <v-card-title class="text-h5"> Y el ganador es... ¡La Hamburguesa! </v-card-title>
         <v-card-text>
           La hamburguesa se encuentra en el top de comidas preferidas, en competencia con la pizza. Y es lógico que
@@ -418,7 +418,7 @@ function toEher(value: number) {
     </v-dialog>
     <v-dialog v-model="data.tieDialog" max-width="640">
       <v-card elevation="10">
-        <v-img src="/public/empate.jpg"></v-img>
+        <v-img src="/empate.jpg"></v-img>
         <v-card-title class="text-h5"> Es increible... ¡Tenemos un empate! </v-card-title>
         <v-card-text>
           No somos los primeros en intentar descifrar esta competencia, pero ¿qué más podíamos esperar? Nos encontramos
@@ -436,4 +436,7 @@ function toEher(value: number) {
       </v-card>
     </v-dialog>
   </div>
+  <img src="../assets/hamburguesa.jpg" class="d-none" />
+  <img src="../assets/pizza.jpg" class="d-none" />
+  <img src="../assets/empate.jpg" class="d-none" />
 </template>
