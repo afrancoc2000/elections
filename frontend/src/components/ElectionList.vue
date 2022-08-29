@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Vue from "vue";
-import { reactive, ref, onMounted } from "vue";
+import { reactive, onMounted } from "vue";
 import router from "../router";
 
 import Web3 from "web3";
@@ -29,7 +29,9 @@ const data: any = reactive({
 const budgetRules = [(value: unknown) => !!value || "El valor es requerido"];
 const subscriptionRules = [
   (value: unknown) => !!value || "La subscripción es requerida",
-  (value: number) => value <= data.contractBudget || "La subscripción debe ser menor que el valor del contrato",
+  (value: number) =>
+    value <= data.contractBudget ||
+    "La subscripción debe ser menor que el valor del contrato",
 ];
 const allowedProviders = ["0x64", "0x4d", "0x539"];
 
@@ -38,7 +40,9 @@ onMounted(async () => {
   data.provider.on("accountsChanged", onAccountsChange);
 
   if (!data.provider) {
-    alert("Debes tener el plugin de Metamask instalado para poder usar esta aplicación.");
+    alert(
+      "Debes tener el plugin de Metamask instalado para poder usar esta aplicación."
+    );
     return;
   }
 
@@ -48,7 +52,9 @@ onMounted(async () => {
 
   if (!allowedProviders.includes(data.provider.chainId)) {
     console.log("ChainID: " + data.provider.chainId);
-    alert("Debes conectarte a la red de Gnosis para poder usar esta aplicación.");
+    alert(
+      "Debes conectarte a la red de Gnosis para poder usar esta aplicación."
+    );
   }
 });
 
@@ -144,7 +150,7 @@ function goToDetail(address: string) {
   router.push(`/election/${address}`);
 }
 
-async function isElectionManager(election: any) {
+function isElectionManager(election: any) {
   return data.currentAccount === election.manager;
 }
 
@@ -163,24 +169,41 @@ function goToFaucet() {
           <v-card-text>
             <p>Para poder usar esta app debes seguir los siguientes pasos:</p>
             <ul class="ml-4 mt-2">
-              <li class="mb-1">1. Instala el plugin de Metamask en tu navegador.</li>
-              <li class="mb-1">2. Inicia el plugin creando una cuenta, ten cuidado de guardar bien las palabras
-                secretas y tu clave.</li>
+              <li class="mb-1">
+                1. Instala el plugin de Metamask en tu navegador.
+              </li>
+              <li class="mb-1">
+                2. Inicia el plugin creando una cuenta, ten cuidado de guardar
+                bien las palabras secretas y tu clave.
+              </li>
               <li class="mb-1">
                 3. Agrega una nueva red en Metamask con los siguientes datos:
                 <ul class="ml-4">
-                  <li><span class="instructions-label">Network Name:</span> POA Sokol Testnet</li>
-                  <li><span class="instructions-label">New RPC URL:</span> https://sokol.poa.network</li>
+                  <li>
+                    <span class="instructions-label">Network Name:</span> POA
+                    Sokol Testnet
+                  </li>
+                  <li>
+                    <span class="instructions-label">New RPC URL:</span>
+                    https://sokol.poa.network
+                  </li>
                   <li><span class="instructions-label">ChainID:</span> 77</li>
                   <li><span class="instructions-label">Symbol:</span> SPOA</li>
-                  <li><span class="instructions-label">Block Explorer URL:</span> https://blockscout.com/poa/soko</li>
+                  <li>
+                    <span class="instructions-label">Block Explorer URL:</span>
+                    https://blockscout.com/poa/soko
+                  </li>
                 </ul>
               </li>
-              <li class="mb-1">4. Obten SPOA de prueba para poder usar la app
+              <li class="mb-1">
+                4. Obten SPOA de prueba para poder usar la app
                 <v-chip color="#10D25F" @click="goToFaucet()">aquí</v-chip>
               </li>
-              <li class="mb-1">5. Ya puedes usar la aplicación, no te gastes todo tu dinero, si vas a crear una votación
-                no uses más de <span class="instructions-label">0.005</span> de tu presupuesto.</li>
+              <li class="mb-1">
+                5. Ya puedes usar la aplicación, no te gastes todo tu dinero, si
+                vas a crear una votación no uses más de
+                <span class="instructions-label">0.005</span> de tu presupuesto.
+              </li>
             </ul>
           </v-card-text>
 
@@ -211,12 +234,21 @@ function goToFaucet() {
             <v-row>
               <v-col cols="auto">
                 <v-avatar slot="icon" color="#10D25F" size="40">
-                  <v-icon icon="mdi-lightbulb" color="white"> mdi-lightbulb </v-icon>
+                  <v-icon icon="mdi-lightbulb" color="white">
+                    mdi-lightbulb
+                  </v-icon>
                 </v-avatar>
               </v-col>
               <v-col cols="auto" class="mr-auto">
-                <p v-if="isConnected()"> Bienvenido {{  data.currentAccount  }}</p>
-                <p>Esta es una DApp de votaciones, se encuentra desplegada en la red de prueba de Zocol.</p>
+                <p v-if="isConnected()">Bienvenido {{  data.currentAccount  }}</p>
+                <p>
+                  Esta es una DApp de votaciones con la que vas a descifrar el
+                  enigma de qué prefiere la gente, la pizza o la hamburguesa!
+                </p>
+                <p>
+                  Se encuentra desplegada en la blockchain de prueba para Gnosis
+                  de Zocol. Espero que la disfrutes.
+                </p>
               </v-col>
               <v-col cols="auto">
                 <v-spacer></v-spacer>
@@ -316,7 +348,7 @@ function goToFaucet() {
 
 <style scoped>
 .instructions-label {
-  color: #10D25F;
+  color: #10d25f;
   font-weight: bold;
 }
 </style>

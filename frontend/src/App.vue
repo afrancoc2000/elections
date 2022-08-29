@@ -14,7 +14,9 @@ function goToGithub() {
   <v-app id="inspire">
     <v-app-bar app>
       <img src="./assets/logo.png" class="logo" alt="Logo Ceiba" />
-      <v-toolbar-title> Elecciones con Blockchain</v-toolbar-title>
+      <v-toolbar-title>
+        Elecciones con Blockchain - Ceiba DevFest 2022
+      </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn @click="goToHome" icon>
         <v-icon>mdi-home</v-icon>
