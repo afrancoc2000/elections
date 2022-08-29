@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { reactive } from "vue";
+import Vue from "vue";
+import { reactive, ref, onMounted } from "vue";
 import router from "../router";
 
 import Web3 from "web3";
-import { onMounted } from "vue";
 import detectEthereumProvider from "@metamask/detect-provider";
 
 const electionFactoryAddress = import.meta.env.VITE_ELECTION_FACTORY_ADDRESS;
@@ -23,11 +23,10 @@ const data: any = reactive({
   elections: [],
   showErrorAlert: false,
   errorAlertMessage: "",
+  instructionsDialog: false,
 });
 
-const budgetRules = [
-  (value: unknown) => !!value || "El valor es requerido",
-];
+const budgetRules = [(value: unknown) => !!value || "El valor es requerido"];
 const subscriptionRules = [
   (value: unknown) => !!value || "La subscripción es requerida",
   (value: number) => value <= data.contractBudget || "La subscripción debe ser menor que el valor del contrato",
@@ -95,6 +94,7 @@ function getContract() {
     data.web3.utils.toChecksumAddress(electionFactoryAddress),
     { from: data.currentAccount }
   );
+  data.electionFactoryContract.events.ElectionsUpdated({}, onElectionsUpdated);
 }
 
 async function getElections() {
@@ -107,14 +107,22 @@ async function getElections() {
     return;
   }
 
-  data.elections = electionAddresses.map((address: string) => {
-    return { address: address };
+  data.elections = buildElections(electionAddresses);
+  console.log(`election addresses: ${JSON.stringify(electionAddresses)}`);
+}
+
+function buildElections(electionAddresses: string[][]) {
+  return electionAddresses.map((richElection: string[]) => {
+    return { address: richElection[0], manager: richElection[1] };
   });
-  console.log(`election addresses: ${electionAddresses}`);
+}
+
+function onElectionsUpdated(error: Error, event: any) {
+  data.elections = buildElections(event.returnValues.elections);
 }
 
 async function createElection() {
-  const receipt = await data.electionFactoryContract.methods
+  await data.electionFactoryContract.methods
     .createElection(
       ["burguer", "pizza"],
       data.web3.utils.toWei(String(data.subscriptionValue), "ether"),
@@ -124,36 +132,81 @@ async function createElection() {
       from: data.currentAccount,
       value: data.web3.utils.toWei(String(data.contractBudget), "ether"),
     });
-
-  console.log(`create election result: ${receipt}`);
-  console.log(`result as json: ${JSON.stringify(receipt.receipt)}`);
-  await getElections();
 }
 
 async function deleteElection(index: number) {
   await data.electionFactoryContract.methods.removeElection(index).send({
     from: data.currentAccount,
   });
-
-  await getElections();
 }
 
 function goToDetail(address: string) {
   router.push(`/election/${address}`);
 }
+
+async function isElectionManager(election: any) {
+  return data.currentAccount === election.manager;
+}
+
+function goToFaucet() {
+  window.open("https://faucet.poa.network", "_blank");
+}
 </script>
 
 <template>
+  <template>
+    <div class="text-center">
+      <v-dialog v-model="data.instructionsDialog" width="650">
+        <v-card>
+          <v-card-title class="text-h5 mt-3"> Instrucciones: </v-card-title>
+          <v-divider color="#10D25F"></v-divider>
+          <v-card-text>
+            <p>Para poder usar esta app debes seguir los siguientes pasos:</p>
+            <ul class="ml-4 mt-2">
+              <li class="mb-1">1. Instala el plugin de Metamask en tu navegador.</li>
+              <li class="mb-1">2. Inicia el plugin creando una cuenta, ten cuidado de guardar bien las palabras
+                secretas y tu clave.</li>
+              <li class="mb-1">
+                3. Agrega una nueva red en Metamask con los siguientes datos:
+                <ul class="ml-4">
+                  <li><span class="instructions-label">Network Name:</span> POA Sokol Testnet</li>
+                  <li><span class="instructions-label">New RPC URL:</span> https://sokol.poa.network</li>
+                  <li><span class="instructions-label">ChainID:</span> 77</li>
+                  <li><span class="instructions-label">Symbol:</span> SPOA</li>
+                  <li><span class="instructions-label">Block Explorer URL:</span> https://blockscout.com/poa/soko</li>
+                </ul>
+              </li>
+              <li class="mb-1">4. Obten SPOA de prueba para poder usar la app
+                <v-chip color="#10D25F" @click="goToFaucet()">aquí</v-chip>
+              </li>
+              <li class="mb-1">5. Ya puedes usar la aplicación, no te gastes todo tu dinero, si vas a crear una votación
+                no uses más de <span class="instructions-label">0.005</span> de tu presupuesto.</li>
+            </ul>
+          </v-card-text>
+
+          <v-divider color="#10D25F"></v-divider>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="#10D25F" text @click="data.instructionsDialog = false">
+              Cerrar
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+  </template>
+
   <v-container class="py-8 px-6" fluid>
     <v-row>
       <v-col cols="12">
         <v-alert v-model="data.showErrorAlert" closable close-label="Cerrar" density="comfortable" type="error"
           variant="tonal" title="Error en la aplicación">
-          {{ data.errorAlertMessage }}
+          {{  data.errorAlertMessage  }}
         </v-alert>
       </v-col>
       <v-col cols="12">
-        <v-banner v-if="isConnected()" two-line>
+        <v-banner two-line>
           <v-container fluid class="ma-0 pa-0">
             <v-row>
               <v-col cols="auto">
@@ -161,10 +214,15 @@ function goToDetail(address: string) {
                   <v-icon icon="mdi-lightbulb" color="white"> mdi-lightbulb </v-icon>
                 </v-avatar>
               </v-col>
-              <v-col cols="11.5">
-            Bienvenido {{ data.currentAccount }}, esta es una DApp de votaciones, se encuentra desplegada en la red de
-            Gnosis, para usar esta red, configura los siguientes parámetros en Metamask: Name: Gnosis, RPC Url:
-            https://rpc.gnosischain.com/, Chain ID: 100 y Currency Symbol: xDai.
+              <v-col cols="auto" class="mr-auto">
+                <p v-if="isConnected()"> Bienvenido {{  data.currentAccount  }}</p>
+                <p>Esta es una DApp de votaciones, se encuentra desplegada en la red de prueba de Zocol.</p>
+              </v-col>
+              <v-col cols="auto">
+                <v-spacer></v-spacer>
+                <v-btn color="success" @click.stop="data.instructionsDialog = true">
+                  Instrucciones
+                </v-btn>
               </v-col>
             </v-row>
           </v-container>
@@ -175,7 +233,7 @@ function goToDetail(address: string) {
         <v-card>
           <v-card-item>
             <v-card-title>Acciones:</v-card-title>
-            <v-form v-model="data.valid">
+            <v-form ref="createForm" v-model="data.valid">
               <v-container fluid>
                 <v-row :align="'center'" :justify="'center'" v-if="!isConnected()">
                   <v-col cols="auto">Por favor conecta tu cuenta con Metamask para empezar a
@@ -195,11 +253,11 @@ function goToDetail(address: string) {
                   </v-col>
                   <v-col cols="3" lg="2">
                     <v-text-field v-model="data.contractBudget" hide-details="auto" label="Valor contrato" type="number"
-                      step="0.1" suffix="ETH" class="create-input" :rules="budgetRules" />
+                      step="0.001" suffix="ETH" class="create-input" :rules="budgetRules" />
                   </v-col>
                   <v-col cols="3" lg="2">
                     <v-text-field v-model="data.subscriptionValue" hide-details="auto" label="Valor Subscripción"
-                      type="number" step="0.1" suffix="ETH" class="create-input" :rules="subscriptionRules" />
+                      type="number" step="0.0001" suffix="ETH" class="create-input" :rules="subscriptionRules" />
                   </v-col>
                   <v-col cols="3" lg="2" :align-self="'end'" depressed>
                     <v-btn color="success" @click="createElection" :disabled="!data.valid">
@@ -229,9 +287,9 @@ function goToDetail(address: string) {
                 </div>
 
                 <div class="ma-3">
-                  <v-list-item-title> Votación {{ index }} </v-list-item-title>
+                  <v-list-item-title> Votación {{  index  }} </v-list-item-title>
                   <v-list-item-subtitle>
-                    {{ election.address }}
+                    {{  election.address  }}
                   </v-list-item-subtitle>
                 </div>
                 <v-spacer></v-spacer>
@@ -240,7 +298,7 @@ function goToDetail(address: string) {
                   <v-btn @click="goToDetail(election.address)" class="mr-2" icon>
                     <v-icon>mdi-poll</v-icon>
                   </v-btn>
-                  <v-btn @click="deleteElection(index)" icon>
+                  <v-btn @click="deleteElection(index)" v-if="isElectionManager(election)" icon>
                     <v-icon>mdi-delete</v-icon>
                   </v-btn>
                 </div>
@@ -255,3 +313,10 @@ function goToDetail(address: string) {
     </v-row>
   </v-container>
 </template>
+
+<style scoped>
+.instructions-label {
+  color: #10D25F;
+  font-weight: bold;
+}
+</style>
