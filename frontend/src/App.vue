@@ -6,7 +6,7 @@ function goToHome() {
   router.push("/");
 }
 function goToGithub() {
-  window.location = "https://github.com/afrancoc2000/elections";
+  window.open("https://github.com/afrancoc2000/elections", "_blank");
 }
 </script>
 
