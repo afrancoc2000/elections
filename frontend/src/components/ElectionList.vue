@@ -5,6 +5,7 @@ import router from "../router";
 
 import Web3 from "web3";
 import detectEthereumProvider from "@metamask/detect-provider";
+import { Election } from "../models/election";
 
 const electionFactoryAddress = import.meta.env.VITE_ELECTION_FACTORY_ADDRESS;
 const electionFactoryAbi = JSON.parse(
@@ -147,15 +148,19 @@ async function deleteElection(index: number) {
 }
 
 function goToDetail(address: string) {
-  router.push(`/election/${address}`);
+  router.push({ name: "election", params: { address } });
 }
 
-function isElectionManager(election: any) {
+function isElectionManager(election: Election) {
   return data.currentAccount === election.manager;
 }
 
 function goToFaucet() {
   window.open("https://faucet.poa.network", "_blank");
+}
+
+function getAlias(election: Election) {
+  return election.address.slice(-4);
 }
 </script>
 
@@ -319,7 +324,7 @@ function goToFaucet() {
                 </div>
 
                 <div class="ma-3">
-                  <v-list-item-title> Votación {{  index  }} </v-list-item-title>
+                  <v-list-item-title> Votación {{  getAlias(election)  }} </v-list-item-title>
                   <v-list-item-subtitle>
                     {{  election.address  }}
                   </v-list-item-subtitle>
