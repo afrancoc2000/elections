@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Vue from "vue";
 import { reactive, onMounted } from "vue";
 import router from "../router";
@@ -66,6 +67,13 @@ async function onAccountsChange() {
 }
 
 async function connect() {
+  if (!data.provider) {
+    alert(
+      "Debes tener el plugin de Metamask instalado para poder usar esta aplicación. Para más información has clic en el botón de instrucciones en la sección anterior."
+    );
+    return;
+  }
+
   data.accounts = await data.provider.request({
     method: "eth_requestAccounts",
   });
@@ -83,7 +91,7 @@ function alert(message: string) {
 
 async function handleAccountsChanged(accounts: string[]) {
   if (accounts.length === 0) {
-    console.log("Please connect to MetaMask.");
+    alert("Por favor conecta tu cuenta con Metamask");
     return;
   }
 
@@ -120,7 +128,10 @@ async function getElections() {
 
 function buildElections(electionAddresses: string[][]) {
   return electionAddresses.map((richElection: string[]) => {
-    return { address: richElection[0], manager: richElection[1] };
+    const election = new Election();
+    election.address = richElection[0];
+    election.manager = richElection[1];
+    return election;
   });
 }
 

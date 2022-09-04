@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Vue from "vue";
 import router from "./router";
 
@@ -18,10 +19,10 @@ function goToGithub() {
         Elecciones con Blockchain - Ceiba DevFest 2022
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn @click="goToHome" icon>
+      <v-btn @click="goToHome()" icon>
         <v-icon>mdi-home</v-icon>
       </v-btn>
-      <v-btn @click="goToGithub" icon>
+      <v-btn @click="goToGithub()" icon>
         <v-icon>mdi-github</v-icon>
       </v-btn>
     </v-app-bar>
